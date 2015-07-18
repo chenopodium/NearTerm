@@ -1,0 +1,83 @@
+{
+    "appKeys": {
+        "0": 0,
+        "1": 1,
+        "10": 10,
+        "11": 11,
+        "12": 12,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5,
+        "6": 6,
+        "7": 7,
+        "8": 8,
+        "9": 9
+    },
+    "capabilities": [
+        "location"
+    ],
+    "companyName": "croth@nobilitas.com",
+    "longName": "Near Term Weather Forecast",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "file": "images/01d_s.png",
+                "name": "IMAGE_01",
+                "type": "png"
+            },
+            {
+                "file": "images/02d_s.png",
+                "name": "IMAGE_02",
+                "type": "png"
+            },
+            {
+                "file": "images/03d_s.png",
+                "name": "IMAGE_03",
+                "type": "png"
+            },
+            {
+                "file": "images/04d_s.png",
+                "name": "IMAGE_04",
+                "type": "png"
+            },
+            {
+                "file": "images/09d_s.png",
+                "name": "IMAGE_09",
+                "type": "png"
+            },
+            {
+                "file": "images/10d_s.png",
+                "name": "IMAGE_10",
+                "type": "png"
+            },
+            {
+                "file": "images/11d_s.png",
+                "name": "IMAGE_11",
+                "type": "png"
+            },
+            {
+                "file": "images/13d_s.png",
+                "name": "IMAGE_13",
+                "type": "png"
+            },
+            {
+                "file": "images/50d_s.png",
+                "name": "IMAGE_50",
+                "type": "png"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "NearTermWeather",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
+    "uuid": "a0ed4516-2af3-4ecb-8337-148f5dc98fb7",
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
