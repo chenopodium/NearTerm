@@ -3,10 +3,9 @@
 #define WIDTH 144
 #define HEIGHT 168
 #define IMG_SIZE 32
-#define MID_Y 62
 #define WEATHER_Y 32
 #define NR_ROWS 4
-
+#define MID_Y HEIGHT-IMG_SIZE*3
 	
 Window *window;	
 TextLayer *txt_time;
@@ -107,13 +106,10 @@ static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reas
 }
 
 static int getY(int row) {
-	return  MID_Y + (row-1) * IMG_SIZE+2;
+	return  MID_Y + (row-1) * IMG_SIZE+1;
 }
 static void graphics_layer_update_callback(Layer *layer, GContext *ctx) {
- 	  GPoint p0 = GPoint(0,  getY(1));
-  	  GPoint p1 = GPoint(WIDTH, getY(1));
-      graphics_context_set_stroke_color(ctx, GColorBlack);
-      graphics_draw_line(ctx, p0, p1);
+ 	
 	  #ifdef PBL_COLOR
 		  for (int i = 0; i < NR_ROWS;i++) {
 			  GColor color = colors[i];
@@ -124,8 +120,8 @@ static void graphics_layer_update_callback(Layer *layer, GContext *ctx) {
 		  }
 		  // also add info bar
 	   
-		  graphics_context_set_fill_color(ctx,GColorOrange);
-		  GRect rect=  GRect(0, 0, WIDTH, 11);
+		  graphics_context_set_fill_color(ctx,GColorLightGray);
+		  GRect rect=  GRect(0, 0, WIDTH, 15);
 		  graphics_fill_rect(ctx, rect, 0, GCornerNone);
 		  // draw bluetooth status?
 	  #endif
@@ -141,11 +137,15 @@ static void graphics_layer_update_callback(Layer *layer, GContext *ctx) {
 		p("no bluetooth");
 		text_layer_set_text(txt_status, "disconnected");
 	}
+	  GPoint p0 = GPoint(0,  getY(1));
+  	  GPoint p1 = GPoint(WIDTH, getY(1));
+      graphics_context_set_stroke_color(ctx, GColorBlack);
+      graphics_draw_line(ctx, p0, p1);
 	p("done graphics_layer_update_callback") ;
 	
 }
 static void addWeatherBitmap(int row, uint32_t resource_id) {	 
-  int x = 1;
+  int x = 0;
   int y = getY(row) -1;
   pd("addWeatherBitmap", row);
   if (!firstTime) {
@@ -314,29 +314,28 @@ void main_window_load(Window *window) {
   layer_add_child(window_get_root_layer(window), graphics_layer);
 	
   // Create time TextLayer
-  txt_time = text_layer_create(GRect(0, 0, WIDTH, 30));
+  txt_time = text_layer_create(GRect(0, 10, WIDTH, 28));
   text_layer_set_background_color(txt_time, GColorClear);
   text_layer_set_text_color(txt_time, GColorBlack);
   text_layer_set_text(txt_time, "00:00");
-
-  // Create status TextLayer
-  txt_status = text_layer_create(GRect(0, 0, WIDTH, 14));
-  text_layer_set_background_color(txt_status, GColorClear);
-  text_layer_set_text_color(txt_status, GColorBlack);
-  text_layer_set_text(txt_status, "loading...");
-  text_layer_set_font(txt_status, fonts_get_system_font(FONT_KEY_GOTHIC_14 ));
-  text_layer_set_text_alignment(txt_status, GTextAlignmentRight);
-	
-  bt_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMG_BLUETOOTH);
-  bt_icon_layer = bitmap_layer_create(GRect(0, 0, 8, 11));
-	
   //Apply to TextLayer
   text_layer_set_font(txt_time, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
   text_layer_set_text_alignment(txt_time, GTextAlignmentCenter);
-
-  // Add it as a child layer to the Window's root layer
+ // Add it as a child layer to the Window's root layer
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(txt_time));
-  
+
+  // Create status TextLayer
+  txt_status = text_layer_create(GRect(12, 0, WIDTH-12, 15));
+  text_layer_set_background_color(txt_status, GColorClear);
+  text_layer_set_text_color(txt_status, GColorBlack);
+  text_layer_set_text(txt_status, "loading...");
+  text_layer_set_font(txt_status, fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD ));
+  text_layer_set_text_alignment(txt_status, GTextAlignmentCenter);
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(txt_status));
+	
+  bt_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMG_BLUETOOTH);
+  bt_icon_layer = bitmap_layer_create(GRect(0, 2, 8, 11));
+	   
 	for (int i =0; i <NR_ROWS; i++ ) {
 		colors[i]= GColorYellow;
 	}
