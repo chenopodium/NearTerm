@@ -290,17 +290,15 @@ void update_time() {
   struct tm *tick_time = localtime(&temp);
 
   // Create a long-lived buffer
-  static char buffer[] = "00:00, 01.01";
+  static char buffer[] = "00:00 am, 01.01";
+  static char datebuffer[] = " 01.01";
+  clock_copy_time_string(buffer, sizeof(buffer));
+  // Write the current ho*urs and minutes into the buffer
+ 
 
-  // Write the current hours and minutes into the buffer
-  if(clock_is_24h_style() == true) {
-    //Use 2h hour format
-    strftime(buffer, sizeof(buffer), "%H:%M, %d.%m", tick_time);
-  } else {
-    //Use 12 hour format
-    strftime(buffer, sizeof(buffer), "%I:%M, %d.%m", tick_time);
-  }
-
+  strftime(datebuffer, sizeof(datebuffer), " %d.%m", tick_time);  
+  strncat (buffer, datebuffer, 6);
+ // strcpy (buffer,datebuffer);
   // Display this time on the TextLayer
   text_layer_set_text(txt_time, buffer);
 }
