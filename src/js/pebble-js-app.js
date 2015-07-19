@@ -80,6 +80,8 @@ function getIconCode(icon) {
 	else if (icon == '11') icode = 11;	
 	else if (icon == '13') icode = 13;	
 	else if (icon == '50') icode = 50;	
+	else icode= 50;
+	log("got icon code:"+icode);
 	return icode;
 }
 function fetchWeather() {
@@ -113,11 +115,12 @@ function fetchForecast() {
  
   req.open('GET', "http://api.openweathermap.org/data/2.5/forecast?" +
     "lat=" + lat + "&lon=" + long + "&cnt=3", true);
+	log("fetching forecast");
   req.onload = function(e) {
     if (req.readyState == 4) {
 	 
       if(req.status == 200) {
-        console.log(req.responseText);
+		  log("Got forecast:"+req.responseText);
         var response = JSON.parse(req.responseText);
         var list = response.list;		
         for (var i = 0; i < list.length && i < 4; i++) {
@@ -133,7 +136,7 @@ function fetchForecast() {
 			else rain = rain + "mm";
             var icon = forecast.weather[0].icon.substring(0,2);
 			var icode = getIconCode(icon);	
-            var weather = temperature+"° "+rain+" "+hoursforecast+"h";
+            var weather = temperature+"C "+rain+" "+hoursforecast+"h";
             var which = (i+1)*3+1;
             log("weather "+i+", which="+which+",  "+weather+", icon="+icode);             
             result[""+which] = (i+1);

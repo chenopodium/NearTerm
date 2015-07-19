@@ -23,6 +23,11 @@
     "resources": {
         "media": [
             {
+                "file": "images/bt.png",
+                "name": "IMG_BLUETOOTH",
+                "type": "png"
+            },
+            {
                 "file": "images/01d_s.png",
                 "name": "IMAGE_01",
                 "type": "png"
@@ -72,7 +77,6 @@
     "sdkVersion": "3",
     "shortName": "NearTermWeather",
     "targetPlatforms": [
-        "aplite",
         "basalt"
     ],
     "uuid": "a0ed4516-2af3-4ecb-8337-148f5dc98fb7",

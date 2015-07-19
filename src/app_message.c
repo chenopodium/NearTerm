@@ -6,18 +6,29 @@
 #define MID_Y 62
 #define WEATHER_Y 32
 #define NR_ROWS 4
+
 	
 Window *window;	
 TextLayer *txt_time;
+TextLayer *txt_status;
 TextLayer *txt_weather[NR_ROWS];
 BitmapLayer *weather_icon_layer[NR_ROWS];
 GBitmap *weather_icon_bitmap[NR_ROWS];
+GBitmap *bt_icon_bitmap;
+BitmapLayer *bt_icon_layer;
 static char weather[NR_ROWS][32];
+static GColor  colors[NR_ROWS];
 static bool firstTime = true;
 Layer *graphics_layer;
 
 void p(char* msg) {
 	APP_LOG(APP_LOG_LEVEL_INFO, "Log: %s", msg);
+}
+void ps(char* msg, char* value) {
+	APP_LOG(APP_LOG_LEVEL_INFO, "Log: %s: %s", msg, value);
+}
+void pd(char* msg, int value) {
+	APP_LOG(APP_LOG_LEVEL_INFO, "Log: %s: %d", msg, value);
 }
 static void showReason(AppMessageResult reason) {
 	static char reasonStr[20];
@@ -76,6 +87,7 @@ void send_message(void){
 	dict_write_uint8(iter, 0x1, 0x1);	
 	dict_write_end(iter);
 	app_message_outbox_send();
+	text_layer_set_text(txt_status, "sending");
 }
 
 
@@ -83,12 +95,15 @@ void send_message(void){
 static void in_dropped_handler(AppMessageResult reason, void *context) {	
 	p("in_dropped_handler");
 	showReason(reason);	
+	text_layer_set_text(txt_status, "dropped");
 }
 
 // Called when PebbleKitJS does not acknowledge receipt of a message
 static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
 	p("out_failed_handler");
 	showReason(reason);	
+	send_message();
+	text_layer_set_text(txt_status, "failed");
 }
 
 static int getY(int row) {
@@ -99,12 +114,40 @@ static void graphics_layer_update_callback(Layer *layer, GContext *ctx) {
   	  GPoint p1 = GPoint(WIDTH, getY(1));
       graphics_context_set_stroke_color(ctx, GColorBlack);
       graphics_draw_line(ctx, p0, p1);
-  
+	  #ifdef PBL_COLOR
+		  for (int i = 0; i < NR_ROWS;i++) {
+			  GColor color = colors[i];
+			  graphics_context_set_fill_color(ctx,color);
+			  GRect rect=  GRect(0, getY(i), WIDTH, IMG_SIZE);
+			  graphics_fill_rect(ctx, rect, 0, GCornerNone);
+
+		  }
+		  // also add info bar
+	   
+		  graphics_context_set_fill_color(ctx,GColorOrange);
+		  GRect rect=  GRect(0, 0, WIDTH, 11);
+		  graphics_fill_rect(ctx, rect, 0, GCornerNone);
+		  // draw bluetooth status?
+	  #endif
+		  if (bluetooth_connection_service_peek()) {
+		  p("bluetooth fine");
+		  // draw ok?
+
+		  bitmap_layer_set_bitmap(bt_icon_layer, bt_icon_bitmap);
+		  layer_add_child(layer, bitmap_layer_get_layer(bt_icon_layer));
+		  text_layer_set_text(txt_status, "connected");
+	  }
+	else {
+		p("no bluetooth");
+		text_layer_set_text(txt_status, "disconnected");
+	}
+	p("done graphics_layer_update_callback") ;
+	
 }
 static void addWeatherBitmap(int row, uint32_t resource_id) {	 
   int x = 1;
   int y = getY(row) -1;
-  
+  pd("addWeatherBitmap", row);
   if (!firstTime) {
 	  gbitmap_destroy(weather_icon_bitmap[row]);
   	  bitmap_layer_destroy(weather_icon_layer[row]); 		
@@ -117,6 +160,7 @@ static void addWeatherBitmap(int row, uint32_t resource_id) {
 }	
 
 static void addRow(int row, int iconid, char* desc) {
+	pd("addRow", row);
   int x = IMG_SIZE+4;	  
   int y = getY(row);
   int w = WIDTH-IMG_SIZE-5;
@@ -179,33 +223,43 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
           switch (icon_id) {
 			case 1:
 				res_id = RESOURCE_ID_IMAGE_01;
+			    colors[index] = GColorYellow;
 			break;
 			case 2:
 				res_id = RESOURCE_ID_IMAGE_02;
+			    colors[index] = GColorOrange;
 			break;
 			case 3:
 				res_id = RESOURCE_ID_IMAGE_03;
+			    colors[index] = GColorLightGray;
 			break;
 			case 4:
 				res_id = RESOURCE_ID_IMAGE_04;
+			    colors[index] = GColorLightGray;
 			break;
 			case 9:
 				res_id = RESOURCE_ID_IMAGE_09;
+			    colors[index] = GColorVividCerulean;
 			break;
 			case 10:
 				res_id = RESOURCE_ID_IMAGE_10;
+			    colors[index] = GColorVividCerulean;
 			break;
 			case 11:
 				res_id = RESOURCE_ID_IMAGE_11;
+			    colors[index] = GColorPurple;
 			break;
 			case 13:
 				res_id = RESOURCE_ID_IMAGE_13;
+			    colors[index] = GColorCeleste;
 			break;
 			case 50:
 				res_id = RESOURCE_ID_IMAGE_50;
+			    colors[index] = GColorLightGray;
 			break;
 			default:
 				res_id = RESOURCE_ID_IMAGE_50;
+			    colors[index] = GColorLightGray;
 			break;
 		  }		
 		  resource_id[index] = res_id;
@@ -225,6 +279,7 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
 		  addWeatherBitmap(i, resource_id[i]);
 	}
 	firstTime = false;
+	text_layer_set_text(txt_status, "weather updated");
 }
 
 
@@ -264,6 +319,17 @@ void main_window_load(Window *window) {
   text_layer_set_text_color(txt_time, GColorBlack);
   text_layer_set_text(txt_time, "00:00");
 
+  // Create status TextLayer
+  txt_status = text_layer_create(GRect(0, 0, WIDTH, 14));
+  text_layer_set_background_color(txt_status, GColorClear);
+  text_layer_set_text_color(txt_status, GColorBlack);
+  text_layer_set_text(txt_status, "loading...");
+  text_layer_set_font(txt_status, fonts_get_system_font(FONT_KEY_GOTHIC_14 ));
+  text_layer_set_text_alignment(txt_status, GTextAlignmentRight);
+	
+  bt_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMG_BLUETOOTH);
+  bt_icon_layer = bitmap_layer_create(GRect(0, 0, 8, 11));
+	
   //Apply to TextLayer
   text_layer_set_font(txt_time, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
   text_layer_set_text_alignment(txt_time, GTextAlignmentCenter);
@@ -271,6 +337,10 @@ void main_window_load(Window *window) {
   // Add it as a child layer to the Window's root layer
   layer_add_child(window_get_root_layer(window), text_layer_get_layer(txt_time));
   
+	for (int i =0; i <NR_ROWS; i++ ) {
+		colors[i]= GColorYellow;
+	}
+	
   // Make sure the time is displayed from the start
   update_time();
 
@@ -280,7 +350,10 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   update_time();
   
   // Get weather update every 30 minutes
-  if(tick_time->tm_min % 30 == 0) {
+  int min= tick_time->tm_min;
+  APP_LOG(APP_LOG_LEVEL_INFO, "tick_handler: %d", min);
+  if(min % 5 == 0) {
+	p("sending message to update weather");
     send_message();
   }
 }
@@ -291,8 +364,11 @@ void main_window_unload(Window *window) {
   		bitmap_layer_destroy(weather_icon_layer[i]);
  		text_layer_destroy(txt_weather[i]);
 	}
-  text_layer_destroy(txt_time);  
-  layer_destroy(graphics_layer);
+	bitmap_layer_destroy(bt_icon_layer) ;
+	gbitmap_destroy(bt_icon_bitmap);
+    text_layer_destroy(txt_time);  
+	text_layer_destroy(txt_status);  
+    layer_destroy(graphics_layer);
 }
 	
 void init(void) {		
